@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APK Certificate Extractor</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            /* fallback background color */
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+
+            /* Full-screen background image */
+            background-image: url('miuibgimage.png');
+            background-size: cover;
+            /* cover fills the viewport */
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            /* keep image fixed during scroll */
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            /* Make container slightly transparent for background to show through */
+            background: rgba(255, 255, 255, 0.85);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            /* subtle blur behind container for better contrast on busy backgrounds */
+            backdrop-filter: blur(0px);
+
+            position: relative;
+            z-index: 1;
+        }
+
+        input[type="file"] {
+            margin: 15px 0;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        pre {
+            background: #f1f1f1;
+            padding: 10px;
+            border-radius: 8px;
+            overflow-x: auto;
+            text-align: left;
+        }
+
+        .field {
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        .field span {
+            font-weight: bold;
+        }
+
+        /* Loading overlay (full-screen) - replaced with requested styles */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #232f3e;
+            display: none;
+            /* shown during upload (set to flex when active) */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #loadingVideo {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        #loadingOverlay span {
+            color: #ffffff;
+            margin-top: 12px;
+            font-weight: 600;
+            font-size: 18px;
+            letter-spacing: 0.3px;
+        }
+
+        #loadingMessage {
+            color: #cbd5e1;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        /* Floating stacks: centered vertically and more realistic */
+        .floating-stack {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            pointer-events: auto;
+            padding: 8px;
+            z-index: 100500;
+            /* ensure above everything */
+            flex-direction: column;
+        }
+
+        .floating-right {
+            right: 18px;
+            left: auto;
+        }
+
+        .floating-left {
+            left: 18px;
+            right: auto;
+        }
+
+        /* Bigger, realistic-looking circular icons */
+        .floating-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            text-decoration: none;
+            box-shadow: 0 12px 30px rgba(12, 23, 44, 0.35), inset 0 -6px 18px rgba(0, 0, 0, 0.08);
+            transition: transform 180ms cubic-bezier(.2, .9, .2, 1), box-shadow 180ms ease, opacity 120ms ease;
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+        }
+
+        .floating-icon:hover,
+        .floating-icon:focus {
+            transform: translateY(-8px) scale(1.06);
+            box-shadow: 0 22px 44px rgba(12, 23, 44, 0.42);
+            outline: none;
+        }
+
+        /* Color styles to make them feel 'real' */
+        .floating-icon.youtube {
+            background: linear-gradient(180deg, #ff5a5f 0%, #cc1f1f 100%);
+            color: #fff;
+        }
+
+        .floating-icon.site {
+            background: linear-gradient(180deg, #4ea1ff 0%, #2b6ef0 100%);
+            color: #fff;
+        }
+
+        .floating-icon.github {
+            background: linear-gradient(180deg, #24292e 0%, #0f1720 100%);
+            color: #fff;
+        }
+
+        .floating-icon.feedback {
+            background: linear-gradient(180deg, #ffd27a 0%, #ffb347 100%);
+            color: #111;
+        }
+
+        /* Ensure svg icons scale nicely inside larger circles */
+        .floating-icon svg {
+            width: 54%;
+            height: 54%;
+            display: block;
+            fill: currentColor;
+        }
+
+        /* Responsive: move to bottom corners and reduce size */
+        @media (max-width: 880px) {
+            .floating-stack {
+                top: auto;
+                bottom: 18px;
+                transform: none;
+                flex-direction: row;
+                gap: 12px;
+                padding: 6px;
+            }
+
+            .floating-right {
+                right: 14px;
+            }
+
+            .floating-left {
+                left: 14px;
+            }
+
+            .floating-icon {
+                width: 60px;
+                height: 60px;
+            }
+
+            .floating-icon svg {
+                width: 58%;
+                height: 58%;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .floating-icon {
+                width: 52px;
+                height: 52px;
+            }
+        }
+
+        /* Floating center button (bottom center) - restored */
+        .floating-center-btn {
+            position: fixed;
+            left: 50%;
+            bottom: env(safe-area-inset-bottom, 18px);
+            transform: translateX(-50%);
+            z-index: 10050;
+            background: linear-gradient(180deg, #ff7a00, #ff5a00);
+            color: #fff;
+            padding: 12px 22px;
+            border-radius: 28px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: transform .15s ease, box-shadow .15s ease, opacity .12s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .floating-center-btn:hover,
+        .floating-center-btn:focus {
+            transform: translateX(-50%) translateY(-4px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+            outline: none;
+        }
+
+        .floating-center-btn:active {
+            transform: translateX(-50%) translateY(-1px) scale(.995);
+        }
+
+        @media (max-width: 520px) {
+            .floating-center-btn {
+                bottom: env(safe-area-inset-bottom, 12px);
+                padding: 10px 16px;
+                width: calc(100% - 32px);
+                max-width: 420px;
+                border-radius: 22px;
+                font-size: 15px;
+            }
+        }
+
+        /* Feedback popup styling (improved) */
+        .feedback-popup {
+            position: fixed;
+            inset: 0;
+            display: none;
+            /* toggled via JS (flex when visible) */
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 120000;
+            padding: 18px;
+            box-sizing: border-box;
+        }
+
+        /* card */
+        .feedback-popup-content {
+            width: min(720px, 96%);
+            max-width: 400px;
+            background: linear-gradient(180deg, #ffffff, #fbfbfd);
+            border-radius: 14px;
+            padding: 20px 22px;
+            box-shadow: 0 18px 40px rgba(8, 20, 40, 0.36);
+            color: #0b1220;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        /* header / title */
+        .feedback-popup-content h2 {
+            margin: 0 0 8px;
+            font-size: 1.25rem;
+            color: #0b1220;
+        }
+
+        /* inputs */
+        .feedback-popup-content form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .feedback-popup-content .field-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .feedback-popup-content input[type="text"],
+        .feedback-popup-content input[type="email"],
+        .feedback-popup-content textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 14px;
+            border: 1px solid #e6e9ef;
+            border-radius: 10px;
+            background: #fff;
+            color: #0b1220;
+            font-size: 15px;
+            transition: box-shadow .12s ease, border-color .12s ease;
+        }
+
+        .feedback-popup-content input[type="text"]:focus,
+        .feedback-popup-content input[type="email"]:focus,
+        .feedback-popup-content textarea:focus {
+            outline: none;
+            border-color: #9fc3ff;
+            box-shadow: 0 8px 20px rgba(26, 115, 232, 0.08);
+        }
+
+        .feedback-popup-content textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* close button */
+        .close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 20px;
+            color: #6b7280;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            line-height: 1;
+            padding: 6px;
+            border-radius: 6px;
+        }
+
+        .close-btn:hover {
+            background: rgba(0, 0, 0, 0.04);
+            color: #111827;
+        }
+
+        /* submit - centered */
+        .feedback-popup-content .submit-row {
+            display: flex;
+            justify-content: center;
+            margin-top: 6px;
+        }
+
+        .feedback-popup-content button[type="submit"] {
+            background: linear-gradient(180deg, #1a73e8, #1558b0);
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 28px rgba(26, 115, 232, 0.12);
+            min-width: 160px;
+        }
+
+        .feedback-popup-content button[type="submit"]:hover {
+            transform: translateY(-2px);
+        }
+
+        /* small helper text */
+        .feedback-popup-content .hint {
+            grid-column: 1 / -1;
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+
+        /* responsive: stack fields */
+        @media (max-width: 600px) {
+            .feedback-popup-content {
+                padding: 16px;
+            }
+
+            .feedback-popup-content form {
+                gap: 10px;
+            }
+
+            .feedback-popup-content button[type="submit"] {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+
+        /* ...existing styles... */
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>APK Certificate Extractor</h2>
+
+        <!-- New: add tdrcropped image in the UI -->
+        <div style="margin:12px 0;">
+            <img id="tdrcropped" src="TDRcropped.jpg" alt="tdrcropped"
+                style="max-width:140px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+        </div>
+
+        <form id="uploadForm">
+            <input type="file" id="apkFile" accept=".apk" required>
+            <br>
+            <button type="submit">Extract Certificate</button>
+        </form>
+
+        <div id="result" style="display:none;">
+            <h3>Extraction Result</h3>
+            <div class="field"><span>Certificate File:</span> <span id="certName"></span></div>
+            <div class="field"><span>Certificate Length:</span> <span id="certLen"></span> bytes</div>
+            <div class="field"><span>MD5:</span> <span id="md5"></span></div>
+            <div class="field"><span>SHA1:</span> <span id="sha1"></span></div>
+            <div class="field"><span>SHA256:</span> <span id="sha256"></span></div>
+
+            <h4>First 16 Hex</h4>
+            <pre id="first16Hex"></pre>
+            <button class="copy-btn" data-target="first16Hex">📋 Copy</button>
+            <button onclick="downloadText('first16Hex', 'first16_hex.txt')">⬇ Download</button>
+
+            <h4>Full Certificate Hex (Preview)</h4>
+            <pre id="fullHex"></pre>
+            <button class="copy-btn" data-target="fullHex">📋 Copy</button>
+            <button onclick="downloadText('fullHex', 'full_cert_hex.txt')">⬇ Download</button>
+        </div>
+    </div>
+
+    <!-- New loading overlay markup as requested -->
+    <div id="loadingOverlay" aria-hidden="true">
+        <video id="loadingVideo" src="tdrvideo cropped.mp4" autoplay muted playsinline loop></video>
+        <span>The DevOps Rite</span>
+        <div id="loadingMessage">Loading...Please do not refresh!</div>
+    </div>
+
+    <!-- Floating social icons -->
+    <div class="floating-stack floating-right" aria-hidden="false">
+        <a class="floating-icon youtube" href="https://www.youtube.com/@TheDevOpsRite" target="_blank" rel="noopener noreferrer"
+            aria-label="YouTube">
+            <!-- simple svg play icon -->
+            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                <path d="M10 8.64L15.27 12 10 15.36V8.64z" />
+                <path
+                    d="M21.8 8s-.2-1.4-.82-2.02C19.9 5 12 5 12 5s-7.9 0-8.98.98C2.4 6.6 2.2 8 2.2 8S2 9.6 2 11.2v1.6C2 14.4 2.2 16 2.2 16s.2 1.4.82 2.02C4.1 19 12 19 12 19s7.9 0 8.98-.98c.62-.62.82-2.02.82-2.02s.2-1.6.2-3.2V11.2C22 9.6 21.8 8 21.8 8z"
+                    opacity=".35" />
+            </svg>
+        </a>
+        <a class="floating-icon site" href="https://devopsrite.vercel.app/" target="_blank" rel="noopener noreferrer"
+            aria-label="Website">
+            🌐
+        </a>
+    </div>
+
+    <!-- Single left stack: GitHub + feedback button (non-submit) -->
+    <div class="floating-stack floating-left" aria-hidden="false">
+        <a class="floating-icon github" href="https://github.com/TheDevOpsRite" target="_blank" rel="noopener noreferrer"
+            aria-label="GitHub">
+            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                <path
+                    d="M12 .5a12 12 0 00-3.8 23.4c.6.1.8-.2.8-.5v-1.9c-3.3.7-4-1.6-4-1.6-.5-1.2-1.2-1.5-1.2-1.5-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.7-1 .7-1 .1-.7.5-1.1.9-1.4-2.6-.3-5.4-1.3-5.4-6a4.8 4.8 0 01.9-3.3 4.5 4.5 0 01.1-3.2s.8-.3 2.8 1a9.6 9.6 0 015 0c2-.6 2.8-1 2.8-1 .8 1.6.3 2.9.1 3.2a4.8 4.8 0 01.9 3.3c0 4.6-2.8 5.6-5.4 6 .5.4 1 .9 1 1.9v2.8c0 .3.2.6.8.5A12 12 0 0012 .5z" />
+            </svg>
+        </a>
+        <button id="feedbackbtn" type="button" class="floating-icon feedback" aria-label="Feedback">📝</button>
+    </div>
+
+    <div id="feedbackPopup" class="feedback-popup" style="display:none;">
+        <div class="feedback-popup-content">
+            <span id="closeFeedback" class="close-btn">&times;</span>
+            <h2>Your feedback is important.</h2>
+            <img src="TDRcropped.jpg" alt="" style="width: 50px; height: 50px; border-radius: 8px;">
+            <p style="font-size: 12px;">Note: Your data is secure with us. We never store your data, Email will be used just for responses only.</p>
+            <form action="https://api.web3forms.com/submit" method="POST" id="contactForm">
+                <input type="hidden" name="access_key" value="0d9e6867-cb21-457f-ae4d-6f94d7879be0">
+                <!-- Order: Email, Name, Subject, Message (vertical) -->
+                <input type="email" name="email" placeholder="Your Email" required>
+                <input type="text" name="name" placeholder="Your Name" required>
+                <input type="text" name="subject" placeholder="Subject" required>
+                <textarea name="message" placeholder="Your Message" required></textarea>
+                <input type="checkbox" name="botcheck" class="hidden" style="display: none;">
+                <div class="submit-row">
+                    <button type="submit">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Center-bottom floating button -->
+    <a id="floatingDecryptor" class="floating-center-btn" href="" aria-label="Go to Decryptor">Go to
+        Decryptor</a>
+
+    <script>
+        // Show loading overlay for 2 seconds on first load
+        window.addEventListener('DOMContentLoaded', function () {
+            var overlay = document.getElementById('loadingOverlay');
+            var video = document.getElementById('loadingVideo');
+            var span = overlay ? overlay.querySelector('span') : null;
+            if (overlay && video && span) {
+                overlay.style.position = 'fixed';
+                overlay.style.top = 0;
+                overlay.style.left = 0;
+                overlay.style.width = '100vw';
+                overlay.style.height = '100vh';
+                overlay.style.background = '#232f3e';
+                overlay.style.display = 'flex';
+                overlay.style.flexDirection = 'column';
+                overlay.style.justifyContent = 'center';
+                overlay.style.alignItems = 'center';
+                overlay.style.zIndex = 9999;
+                video.style.width = '220px';
+                video.style.height = '220px';
+                video.style.borderRadius = '50%';
+                video.style.objectFit = 'cover';
+                video.playbackRate = 4;
+                span.style.display = 'block';
+                span.style.marginTop = '24px';
+                span.style.color = '#fff';
+                span.style.fontSize = '2rem';
+                span.style.fontWeight = 'bold';
+                span.style.letterSpacing = '2px';
+                span.style.textAlign = 'center';
+                span.style.textShadow = '0 2px 8px rgba(0,0,0,0.3)';
+                setTimeout(function () {
+                    overlay.style.display = 'none';
+                }, 2000);
+            }
+        });
+         // Feedback popup logic
+        document.addEventListener('DOMContentLoaded', function () {
+            const feedbackBtn = document.getElementById('feedbackbtn'); // matches your button id
+            const feedbackPopup = document.getElementById('feedbackPopup');
+            const closeFeedback = document.getElementById('closeFeedback');
+
+            if (feedbackBtn && feedbackPopup) {
+                feedbackBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    feedbackPopup.style.display = 'flex';
+                    feedbackPopup.setAttribute('aria-hidden', 'false');
+                });
+            }
+
+            if (closeFeedback && feedbackPopup) {
+                closeFeedback.addEventListener('click', function () {
+                    feedbackPopup.style.display = 'none';
+                    feedbackPopup.setAttribute('aria-hidden', 'true');
+                });
+            }
+
+            // Close when clicking outside the popup content
+            window.addEventListener('click', function (e) {
+                if (e.target === feedbackPopup) {
+                    feedbackPopup.style.display = 'none';
+                    feedbackPopup.setAttribute('aria-hidden', 'true');
+                }
+            });
+        });
+        // Show/hide helper for loading overlay
+        function showLoading() {
+            const ov = document.getElementById('loadingOverlay');
+            const v = document.getElementById('loadingVideo');
+            if (ov) ov.style.display = 'flex';
+            if (v && v.play) v.play().catch(() => { });
+        }
+        function hideLoading() {
+            const ov = document.getElementById('loadingOverlay');
+            const v = document.getElementById('loadingVideo');
+            if (ov) ov.style.display = 'none';
+            if (v && v.pause) try { v.pause(); v.currentTime = 0; } catch (e) { }
+        }
+
+        document.getElementById("uploadForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const fileInput = document.getElementById("apkFile");
+            if (!fileInput.files.length) {
+                alert("Please select an APK file.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("apk", fileInput.files[0]);
+
+            try {
+                showLoading(); // show video overlay while uploading
+
+                // Changed: use explicit backend URL so the request is sent to your running Express server.
+                const response = await fetch("http://127.0.0.1:5000/extract-cert", {
+                    method: "POST",
+                    body: formData,
+                    mode: "cors"
+                });
+
+                if (!response.ok) throw new Error("Upload failed: " + response.status + " " + response.statusText);
+
+                const data = await response.json();
+                document.getElementById("certName").innerText = data.cert_name;
+                document.getElementById("certLen").innerText = data.cert_len;
+                document.getElementById("md5").innerText = data.md5_hex;
+                document.getElementById("sha1").innerText = data.sha1_hex;
+                document.getElementById("sha256").innerText = data.sha256_hex;
+                document.getElementById("first16Hex").innerText = data.first16_hex;
+                document.getElementById("fullHex").innerText = data.full_cert_hex_preview;
+
+                document.getElementById("result").style.display = "block";
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                hideLoading(); // always hide overlay when done
+            }
+        });
+
+        // Safe copy function with UI feedback. No alerts.
+        async function safeCopy(text) {
+            if (!text) return false;
+            // Try Clipboard API first
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                } catch (e) {
+                    // fallthrough to execCommand fallback
+                }
+            }
+            // Fallback: hidden textarea + execCommand
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            // Prevent scrolling to bottom
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            ta.style.top = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try {
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                return true;
+            } catch (e) {
+                document.body.removeChild(ta);
+                return false;
+            }
+        }
+
+        // Update button text to show copied confirmation and put preview in tooltip, then revert
+        function showCopiedOnButton(btn, fullText) {
+            // store original label once
+            if (!btn.dataset.origLabel) btn.dataset.origLabel = btn.innerText;
+            const original = btn.dataset.origLabel;
+            // create a short preview for the tooltip
+            const preview = (fullText || '').replace(/\s+/g, ' ').trim();
+            const tooltip = preview.length > 60 ? preview.slice(0, 60) + '...' : preview;
+            // show simple copied label in the button, set tooltip to preview/full text
+            btn.innerText = 'Copied ✓';
+            btn.title = tooltip;
+            // revert after 2.5s
+            clearTimeout(btn._revertTimer);
+            btn._revertTimer = setTimeout(() => {
+                btn.innerText = original;
+                btn.title = '';
+            }, 2500);
+        }
+
+        // Attach handlers to all copy buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const targetId = btn.getAttribute('data-target');
+                    if (!targetId) return;
+                    const el = document.getElementById(targetId);
+                    if (!el) return;
+                    const text = el.innerText || el.textContent || '';
+                    const ok = await safeCopy(text);
+                    if (ok) {
+                        // show copied text in button (preview) instead of alert
+                        showCopiedOnButton(btn, text);
+                    } else {
+                        // on failure, show a subtle UI change (no alert)
+                        const old = btn.innerText;
+                        btn.innerText = 'Copy failed';
+                        clearTimeout(btn._revertTimer);
+                        btn._revertTimer = setTimeout(() => { btn.innerText = old; }, 1800);
+                    }
+                });
+            });
+        });
+
+        function downloadText(elementId, filename) {
+            const text = document.getElementById(elementId).innerText;
+            const blob = new Blob([text], { type: "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+        // ...existing code (showLoading, hideLoading, upload logic, etc.) ...
+    </script>
+</body>
+
+</html>

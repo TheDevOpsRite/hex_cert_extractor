@@ -28,7 +28,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 # Enable CORS for all routes (adjust origins as needed)
-CORS(app, resources={r"/extract-cert": {"origins": "https://hex-cert-extractor.vercel.app/"}})
+CORS(app, resources={r"/extract-cert": {"origins": "https://hex-cert-extractor.vercel.app"}})
 swagger = Swagger(app)
 
 # Maximum upload size (20 MB default)

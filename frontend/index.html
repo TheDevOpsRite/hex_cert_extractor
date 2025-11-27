@@ -4,7 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APK Certificate Extractor</title>
+    <title>Global Decryptor — APK Hex Certificate Extractor (Educational)</title>
+    <meta name="description" content="Global Decryptor is an educational web tool to extract APK certificate bytes and hex keys (MD5, SHA1, SHA256) to help recover lost files. Not for breaching security.">
+    <meta name="keywords" content="Global Decryptor, APK certificate extractor, APK hex keys, MD5, SHA1, SHA256, Android APK, educational, file recovery">
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow">
+    <link rel="canonical" href="https://hex-cert-extractor.vercel.app/">
+    <meta name="theme-color" content="#007bff">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Global Decryptor — APK Hex Certificate Extractor">
+    <meta property="og:description" content="Extract APK certificate hex keys (MD5, SHA1, SHA256). Educational tool for recovery.">
+    <meta property="og:url" content="https://hex-cert-extractor.vercel.app/">
+    <meta property="og:image" content="https://hex-cert-extractor.vercel.app/TDRcropped.jpg">
+    <meta property="og:image:alt" content="Global Decryptor certificate extractor preview">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Global Decryptor — APK Hex Certificate Extractor">
+    <meta name="twitter:description" content="Extract APK certificate hex keys; educational use only.">
+    <meta name="twitter:image" content="https://hex-cert-extractor.vercel.app/TDRcropped.jpg">
+    <meta name="twitter:site" content="@TheDevOpsRite">
     <link rel="stylesheet" href="style.css">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <style>
@@ -415,15 +436,41 @@
 
         /* ...existing styles... */
     </style>
+        <!-- Structured Data -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Global Decryptor — APK Certificate Hex Extractor",
+            "operatingSystem": "Web",
+            "applicationCategory": "Utility",
+            "inLanguage": "en",
+            "url": "https://hex-cert-extractor.vercel.app/",
+            "description": "Educational web tool to extract APK certificate bytes and hex keys (MD5, SHA1, SHA256) to aid file recovery.",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "author": { "@type": "Person", "name": "The DevOps Rite" },
+            "publisher": { "@type": "Organization", "name": "The DevOps Rite" },
+            "keywords": "Global Decryptor, APK, certificate extractor, hex keys, MD5, SHA1, SHA256, education, file recovery",
+            "featureList": [
+                "Upload .apk securely",
+                "Extract certificate file and hex preview",
+                "Compute MD5, SHA1, SHA256",
+                "Copy and download results"
+            ],
+            "usageInfo": "For education and file recovery only; do not use to breach security."
+        }
+        </script>
 </head>
 
 <body>
     <div class="container">
-        <h2>APK Certificate Extractor</h2>
+                <h1>Global Decryptor — APK Hex Certificate Extractor</h1>
+                <p style="margin-top:8px;color:#374151;font-size:15px;">This tool is built for educational purposes and to help with legitimate file recovery. Do not use it to breach or circumvent security.</p>
 
         <!-- New: add tdrcropped image in the UI -->
         <div style="margin:12px 0;">
-            <img id="tdrcropped" src="TDRcropped.jpg" alt="tdrcropped"
+            <img id="tdrcropped" src="TDRcropped.jpg" alt="Global Decryptor logo"
                 style="max-width:140px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
         </div>
         <p style="font-size: 18px; font-weight: 600;">We accept <span style="color: #007bff;" >.apk</span> file only.</p>
@@ -515,6 +562,12 @@
     <a id="floatingDecryptor" class="floating-center-btn" href="https://global-decryptor.vercel.app/" aria-label="Go to Decryptor">Go to
         Decryptor</a>
 
+    <!-- Simple footer with Terms button -->
+    <footer style="margin-top:40px; text-align:center; color:#6b7280;">
+        <button  type="button" ><a href="terms.html" style="color: white; text-decoration: none;">Terms & Conditions</a></button>
+        <div style="margin-top:8px;font-size:13px; color: white;">Educational use only; do not breach security.</div>
+    </footer>
+
     <script>
         // Show loading overlay for 2 seconds on first load
         window.addEventListener('DOMContentLoaded', function () {
@@ -555,8 +608,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             const feedbackBtn = document.getElementById('feedbackbtn'); // matches your button id
             const feedbackPopup = document.getElementById('feedbackPopup');
-            const closeFeedback = document.getElementById('closeFeedback');
-
+            const closeFeedback = document.getElementById('closeFeedback');            
             if (feedbackBtn && feedbackPopup) {
                 feedbackBtn.addEventListener('click', function (e) {
                     e.preventDefault();
@@ -577,7 +629,7 @@
                 if (e.target === feedbackPopup) {
                     feedbackPopup.style.display = 'none';
                     feedbackPopup.setAttribute('aria-hidden', 'true');
-                }
+                }               
             });
         });
         // Show/hide helper for loading overlay

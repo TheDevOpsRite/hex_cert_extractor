@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://hex-cert-extractor.vercel.app/sitemap.xml
